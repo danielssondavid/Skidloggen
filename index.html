@@ -68,7 +68,11 @@
             />
           </label>
 
-          <button type="submit" class="primary">Spara pass</button>
+          <div class="form-actions">
+            <button id="submitButton" type="submit" class="primary">Spara pass</button>
+            <button id="cancelEditButton" type="button" class="secondary hidden">Avbryt redigering</button>
+          </div>
+          <p id="formState" class="form-state" aria-live="polite"></p>
           <p id="formError" class="error" aria-live="polite"></p>
         </form>
 
