@@ -78,6 +78,18 @@ header {
   padding: 1rem;
 }
 
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.summary-season-picker {
+  min-width: 170px;
+}
+
 form {
   display: grid;
   gap: 0.75rem;
