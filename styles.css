@@ -103,13 +103,47 @@ select {
   padding: 0.7rem;
 }
 
+.form-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.primary,
+.secondary,
+.edit-button,
+.delete-button {
+  border-radius: 10px;
+  padding: 0.65rem 0.8rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
 .primary {
   background: var(--primary);
-  border: none;
+  border-color: var(--primary);
   color: #fff;
-  border-radius: 10px;
-  padding: 0.8rem;
-  font-weight: 700;
+}
+
+.secondary,
+.edit-button {
+  background: #fff;
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.delete-button {
+  background: #fff6f6;
+  color: #a30000;
+  border-color: #efc8c8;
+}
+
+.hidden {
+  display: none;
+}
+
+.form-state {
+  color: #0d5c9e;
+  min-height: 1.3em;
 }
 
 .error {
@@ -136,6 +170,12 @@ select {
   color: var(--muted);
   font-size: 0.93rem;
   margin-top: 0.35rem;
+}
+
+.session-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
 }
 
 .totals {
