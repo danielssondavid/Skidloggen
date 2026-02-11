@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Skidlogg</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header>
+        <h1>Skidlogg</h1>
+        <p id="seasonLabel" class="season"></p>
+      </header>
+
+      <nav class="tabs" aria-label="Flikar">
+        <button class="tab-button active" data-tab="logg" type="button">Logga pass</button>
+        <button class="tab-button" data-tab="sammanfattning" type="button">Sammanfattning</button>
+      </nav>
+
+      <section id="tab-logg" class="tab-panel active" aria-labelledby="Logga pass">
+        <form id="sessionForm" class="card">
+          <label>
+            Stil
+            <select id="style" required>
+              <option value="Klassiskt">Klassiskt</option>
+              <option value="Skejt">Skejt</option>
+              <option value="Rullskidor">Rullskidor</option>
+              <option value="Stakmaskin">Stakmaskin</option>
+            </select>
+          </label>
+
+          <label>
+            Datum
+            <input id="date" type="date" required />
+          </label>
+
+          <label>
+            Distans (km)
+            <input
+              id="distance"
+              type="text"
+              inputmode="text"
+              placeholder="t.ex. 12,5"
+              required
+            />
+          </label>
+
+          <label>
+            Tid (hh:mm:ss eller mm:ss)
+            <input
+              id="duration"
+              type="text"
+              inputmode="text"
+              placeholder="t.ex. 1:12:30"
+              required
+            />
+          </label>
+
+          <label>
+            Höjdmeter
+            <input
+              id="elevation"
+              type="text"
+              inputmode="text"
+              placeholder="t.ex. 340"
+              required
+            />
+          </label>
+
+          <button type="submit" class="primary">Spara pass</button>
+          <p id="formError" class="error" aria-live="polite"></p>
+        </form>
+
+        <section class="card">
+          <h2>Pass denna säsong</h2>
+          <ul id="sessionList" class="session-list"></ul>
+          <p id="emptyState">Inga pass loggade ännu.</p>
+        </section>
+      </section>
+
+      <section id="tab-sammanfattning" class="tab-panel" aria-labelledby="Sammanfattning">
+        <div class="card">
+          <h2>Summering för <span id="summarySeason"></span></h2>
+          <div class="totals" id="totals"></div>
+        </div>
+
+        <div class="card">
+          <h2>Summering per stil</h2>
+          <div id="styleSummaries" class="style-summaries"></div>
+        </div>
+
+        <div class="card">
+          <h2>Distans per stil</h2>
+          <canvas id="distanceChart" width="320" height="320" aria-label="Cirkeldiagram" role="img"></canvas>
+          <ul id="chartLegend" class="legend"></ul>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
