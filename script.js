@@ -10,6 +10,9 @@ const form = document.getElementById("sessionForm");
 const list = document.getElementById("sessionList");
 const emptyState = document.getElementById("emptyState");
 const errorField = document.getElementById("formError");
+const formState = document.getElementById("formState");
+const submitButton = document.getElementById("submitButton");
+const cancelEditButton = document.getElementById("cancelEditButton");
 const seasonLabel = document.getElementById("seasonLabel");
 const summarySeason = document.getElementById("summarySeason");
 const totals = document.getElementById("totals");
@@ -17,11 +20,19 @@ const styleSummaries = document.getElementById("styleSummaries");
 const legend = document.getElementById("chartLegend");
 const chartCanvas = document.getElementById("distanceChart");
 
+const styleInput = document.getElementById("style");
+const dateInput = document.getElementById("date");
+const distanceInput = document.getElementById("distance");
+const durationInput = document.getElementById("duration");
+const elevationInput = document.getElementById("elevation");
+
 const tabButtons = document.querySelectorAll(".tab-button");
 const tabPanels = {
   logg: document.getElementById("tab-logg"),
   sammanfattning: document.getElementById("tab-sammanfattning"),
 };
+
+let editingSessionId = null;
 
 function getSeasonFromDate(date) {
   const year = date.getFullYear();
@@ -94,6 +105,10 @@ function formatNumber(value, digits = 1) {
   }).format(value);
 }
 
+function formatDistanceInput(value) {
+  return String(value).replace(".", ",");
+}
+
 function loadSessions() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return [];
@@ -107,6 +122,33 @@ function loadSessions() {
 
 function saveSessions(sessions) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+}
+
+function clearForm() {
+  form.reset();
+  dateInput.valueAsDate = new Date();
+  errorField.textContent = "";
+}
+
+function setEditingMode(session) {
+  editingSessionId = session.id;
+  styleInput.value = session.style;
+  dateInput.value = session.date;
+  distanceInput.value = formatDistanceInput(session.distance);
+  durationInput.value = formatDuration(session.durationSeconds);
+  elevationInput.value = String(session.elevation);
+  submitButton.textContent = "Uppdatera pass";
+  cancelEditButton.classList.remove("hidden");
+  formState.textContent = `Redigerar pass: ${session.style} ${session.date}`;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function resetEditingMode() {
+  editingSessionId = null;
+  submitButton.textContent = "Spara pass";
+  cancelEditButton.classList.add("hidden");
+  formState.textContent = "";
+  clearForm();
 }
 
 function render() {
@@ -146,6 +188,10 @@ function renderSessionList(sessions) {
           ${formatNumber(session.distance)} km • ${formatDuration(session.durationSeconds)} •
           Tempo: ${formatPace(secPerKm)} • Stifa: ${formatNumber(stifa)}
         </div>
+        <div class="session-actions">
+          <button type="button" class="edit-button" data-action="edit" data-id="${session.id}">Ändra</button>
+          <button type="button" class="delete-button" data-action="delete" data-id="${session.id}">Ta bort</button>
+        </div>
       `;
       list.appendChild(item);
     });
@@ -182,7 +228,6 @@ function renderSummary(sessions) {
   });
 
   renderStyleSummaries(distancesByStyle);
-
   renderPieChart(distancesByStyle);
 
   legend.innerHTML = distancesByStyle
@@ -254,56 +299,98 @@ function renderPieChart(data) {
   });
 }
 
-function submitSession(event) {
-  event.preventDefault();
-  errorField.textContent = "";
-
-  const style = document.getElementById("style").value;
-  const date = document.getElementById("date").value;
-  const distance = parseNumber(document.getElementById("distance").value);
-  const durationRaw = document.getElementById("duration").value;
-  const elevation = parseNumber(document.getElementById("elevation").value);
-
-  const durationSeconds = parseDurationToSeconds(durationRaw);
+function buildSessionFromForm() {
+  const style = styleInput.value;
+  const date = dateInput.value;
+  const distance = parseNumber(distanceInput.value);
+  const durationSeconds = parseDurationToSeconds(durationInput.value);
+  const elevation = parseNumber(elevationInput.value);
 
   if (!date) {
-    errorField.textContent = "Ange datum.";
-    return;
+    return { error: "Ange datum." };
   }
 
   if (!Number.isFinite(distance) || distance <= 0) {
-    errorField.textContent = "Distans måste vara ett positivt tal.";
-    return;
+    return { error: "Distans måste vara ett positivt tal." };
   }
 
   if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
-    errorField.textContent = "Tid måste vara i format mm:ss eller hh:mm:ss.";
-    return;
+    return { error: "Tid måste vara i format mm:ss eller hh:mm:ss." };
   }
 
   if (!Number.isFinite(elevation) || elevation < 0) {
-    errorField.textContent = "Höjdmeter måste vara 0 eller mer.";
+    return { error: "Höjdmeter måste vara 0 eller mer." };
+  }
+
+  return {
+    value: {
+      style,
+      date,
+      distance,
+      durationSeconds,
+      elevation,
+      season: getSeasonFromDate(new Date(date)),
+    },
+  };
+}
+
+function submitSession(event) {
+  event.preventDefault();
+  errorField.textContent = "";
+  formState.textContent = "";
+
+  const parsed = buildSessionFromForm();
+  if (parsed.error) {
+    errorField.textContent = parsed.error;
     return;
   }
 
-  const season = getSeasonFromDate(new Date(date));
-
-  const session = {
-    id: crypto.randomUUID(),
-    style,
-    date,
-    distance,
-    durationSeconds,
-    elevation,
-    season,
-  };
-
   const sessions = loadSessions();
-  sessions.push(session);
-  saveSessions(sessions);
-  form.reset();
-  document.getElementById("date").valueAsDate = new Date();
+
+  if (editingSessionId) {
+    const updated = sessions.map((session) =>
+      session.id === editingSessionId ? { ...session, ...parsed.value } : session
+    );
+    saveSessions(updated);
+    resetEditingMode();
+  } else {
+    sessions.push({ id: crypto.randomUUID(), ...parsed.value });
+    saveSessions(sessions);
+    clearForm();
+  }
+
   render();
+}
+
+function handleListAction(event) {
+  const target = event.target.closest("button[data-action]");
+  if (!target) return;
+
+  const action = target.dataset.action;
+  const id = target.dataset.id;
+  const sessions = loadSessions();
+  const session = sessions.find((item) => item.id === id);
+
+  if (!session) return;
+
+  if (action === "edit") {
+    setEditingMode(session);
+    return;
+  }
+
+  if (action === "delete") {
+    const confirmed = window.confirm("Vill du ta bort passet?");
+    if (!confirmed) return;
+
+    const next = sessions.filter((item) => item.id !== id);
+    saveSessions(next);
+
+    if (editingSessionId === id) {
+      resetEditingMode();
+    }
+
+    render();
+  }
 }
 
 function initTabs() {
@@ -321,8 +408,10 @@ function initTabs() {
 }
 
 function init() {
-  document.getElementById("date").valueAsDate = new Date();
+  dateInput.valueAsDate = new Date();
   form.addEventListener("submit", submitSession);
+  list.addEventListener("click", handleListAction);
+  cancelEditButton.addEventListener("click", resetEditingMode);
   initTabs();
   render();
 }
