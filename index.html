@@ -67,7 +67,13 @@
 
       <section id="tab-sammanfattning" class="tab-panel" aria-labelledby="Sammanfattning">
         <div class="card">
-          <h2>Summering för <span id="summarySeason"></span></h2>
+          <div class="summary-header">
+            <h2>Summering för <span id="summarySeason"></span></h2>
+            <label class="summary-season-picker">
+              Välj säsong
+              <select id="summarySeasonSelect"></select>
+            </label>
+          </div>
           <div class="totals" id="totals"></div>
         </div>
 
