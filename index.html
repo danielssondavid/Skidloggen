@@ -59,7 +59,13 @@
         </form>
 
         <section class="card">
-          <h2>Pass denna säsong</h2>
+          <div class="summary-header">
+            <h2>Pass</h2>
+            <label class="summary-season-picker">
+              Visa pass
+              <select id="logSeasonSelect"></select>
+            </label>
+          </div>
           <ul id="sessionList" class="session-list"></ul>
           <p id="emptyState">Inga pass loggade ännu.</p>
         </section>
