@@ -16,6 +16,7 @@ const cancelEditButton = document.getElementById("cancelEditButton");
 const seasonLabel = document.getElementById("seasonLabel");
 const summarySeason = document.getElementById("summarySeason");
 const summarySeasonSelect = document.getElementById("summarySeasonSelect");
+const logSeasonSelect = document.getElementById("logSeasonSelect");
 const totals = document.getElementById("totals");
 const styleSummaries = document.getElementById("styleSummaries");
 const legend = document.getElementById("chartLegend");
@@ -36,6 +37,7 @@ const tabPanels = {
 
 let editingSessionId = null;
 let selectedSummarySeason = getCurrentSeason();
+let selectedLogSeasonFilter = "__current__";
 
 function parseSeasonStartYear(season) {
   if (!season || !season.includes("/")) return -1;
@@ -63,6 +65,38 @@ function renderSeasonSelector(sessions) {
     .join("");
 
   summarySeasonSelect.value = selectedSummarySeason;
+}
+
+function renderLogSeasonSelector(sessions) {
+  const options = getSeasonOptions(sessions);
+
+  const built = [
+    { value: "__current__", label: "Aktuell säsong" },
+    { value: "__all__", label: "Alla säsonger" },
+    ...options.map((season) => ({ value: season, label: season })),
+  ];
+
+  logSeasonSelect.innerHTML = built
+    .map((option) => `<option value="${option.value}">${option.label}</option>`)
+    .join("");
+
+  if (!built.some((option) => option.value === selectedLogSeasonFilter)) {
+    selectedLogSeasonFilter = "__current__";
+  }
+
+  logSeasonSelect.value = selectedLogSeasonFilter;
+}
+
+function getLogSessions(allSessions, currentSeason) {
+  if (selectedLogSeasonFilter === "__all__") {
+    return allSessions;
+  }
+
+  if (selectedLogSeasonFilter === "__current__") {
+    return allSessions.filter((session) => session.season === currentSeason);
+  }
+
+  return allSessions.filter((session) => session.season === selectedLogSeasonFilter);
 }
 
 function getSeasonFromDate(date) {
@@ -212,14 +246,15 @@ function resetEditingMode() {
 function render() {
   const all = loadSessions();
   const currentSeason = getCurrentSeason();
-  const currentSessions = all.filter((session) => session.season === currentSeason);
+  const logSessions = getLogSessions(all, currentSeason);
   const summarySessions = all.filter((session) => session.season === selectedSummarySeason);
 
   seasonLabel.textContent = `Aktuell säsong: ${currentSeason}`;
   summarySeason.textContent = selectedSummarySeason;
 
+  renderLogSeasonSelector(all);
   renderSeasonSelector(all);
-  renderSessionList(currentSessions);
+  renderSessionList(logSessions);
   renderSummary(summarySessions);
 }
 
@@ -487,6 +522,10 @@ function init() {
   list.addEventListener("click", handleListAction);
   cancelEditButton.addEventListener("click", resetEditingMode);
   styleInput.addEventListener("change", updateElevationVisibility);
+  logSeasonSelect.addEventListener("change", () => {
+    selectedLogSeasonFilter = logSeasonSelect.value;
+    render();
+  });
   summarySeasonSelect.addEventListener("change", () => {
     selectedSummarySeason = summarySeasonSelect.value;
     render();
